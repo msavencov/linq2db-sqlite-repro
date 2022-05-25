@@ -21,8 +21,13 @@ class Program
         connection.ApplyMigrations();
             
         var inserted = connection.Insert(row1);
+        var updated = connection.GetTable<TestTable>()
+                                .Where(t => t.Id == row1.Id)
+                                .Set(t => t.ExternalId.Id, random.Next().ToString())
+                                .Update();
+        
         var actual = connection.GetTable<TestTable>().Take(10).ToList();
-            
+        
         try
         {
             var created = connection.GetTable<TestTable>().InsertWithOutput(row2);
