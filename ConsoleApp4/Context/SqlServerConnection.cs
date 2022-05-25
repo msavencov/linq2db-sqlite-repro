@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using FluentMigrator.Runner;
 using FluentMigrator.Runner.Initialization;
 using FluentMigrator.Runner.Processors;
@@ -8,30 +7,21 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace ConsoleApp4.Context
 {
-    public class SqliteConnection : BaseConnection
+    public class SqlServerConnection : BaseConnection
     {
-        protected string DatabaseFileName { get; }
-
-        public SqliteConnection(string databaseFileName) : base(ProviderName.SQLite, $"Data Source={databaseFileName}", Schema.Value)
+        public SqlServerConnection(string connectionString) : base(ProviderName.SqlServer2019, connectionString, Schema.Value)
         {
-            DatabaseFileName = databaseFileName;
+            
         }
 
         public void ApplyMigrations()
         {
-            var databaseFileInfo = new FileInfo(DatabaseFileName);
-            
-            if (databaseFileInfo.Exists == false)
-            {
-                using var _ = databaseFileInfo.Create();
-            }
-            
             var services = new ServiceCollection();
 
             services.AddFluentMigratorCore()
                     .ConfigureRunner(runnerBuilder =>
                     {
-                        runnerBuilder.AddSQLite();
+                        runnerBuilder.AddSqlServer2016();
                         runnerBuilder.ScanIn(typeof(Program).Assembly);
                         runnerBuilder.WithGlobalConnectionString(ConnectionString);
                     })

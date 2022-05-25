@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Linq;
 using ConsoleApp4.Context;
 using ConsoleApp4.Context.Models;
 using FluentMigrator.Runner;
@@ -14,67 +15,26 @@ namespace ConsoleApp4
     {
         static void Main(string[] args)
         {
-            var connection = GetConnection("default");
-            var data = new TestTable
-            {
-                Id = Guid.NewGuid(),
-                Name = "John Doe",
-                ExternalId = new ExternalId
-                {
-                    Id = "1",
-                    Source = "unknown"
-                }
-            };
+            var random = new Random();
             
-            var created = connection.GetTable<TestTable>().InsertWithOutput(data);
-        }
-
-        private static BaseConnection GetConnection(string database)
-        {
-            var databaseFileName = $"{database}.sqlite";
-            var databaseFileInfo = new FileInfo(databaseFileName);
+            var row1 = new TestTable {Id = Guid.NewGuid(), Name = "John Doe", ExternalId = {Id = random.Next().ToString(), Source = "unknown"}};
+            var row2 = new TestTable {Id = Guid.NewGuid(), Name = "John Doe", ExternalId = {Id = random.Next().ToString(), Source = "unknown"}};
             
-            if (databaseFileInfo.Exists == false)
+            var connection = new SqliteConnection("default.sqlite");
+            //var connection = new SqlServerConnection("Server=localhost;Database=test;Integrated Security=True;");
+            
+            connection.ApplyMigrations();
+            
+            var inserted = connection.Insert(row1);
+            var actual = connection.GetTable<TestTable>().Take(10).ToList();
+            
+            try
             {
-                using var _ = databaseFileInfo.Create();
+                var created = connection.GetTable<TestTable>().InsertWithOutput(row2);
             }
-            
-            var connectionString = $"Data Source={databaseFileName}";
-            
-            ApplyMigration(databaseFileName, connectionString);
-            
-            return new SqliteConnection(connectionString);
-        }
-
-        private static void ApplyMigration(string databasePath, string connectionString)
-        {
-            var services = new ServiceCollection();
-
-            services.AddFluentMigratorCore()
-                    .ConfigureRunner(runnerBuilder =>
-                    {
-                        runnerBuilder.AddSQLite();
-                        runnerBuilder.ScanIn(typeof(Program).Assembly);
-                        runnerBuilder.WithGlobalConnectionString(connectionString);
-                    })
-                    .AddLogging(builder => { builder.AddFluentMigratorConsole(); })
-                    .Configure<ProcessorOptions>(options =>
-                    {
-                        options.Timeout = TimeSpan.FromMinutes(3);
-                    })
-                    .Configure<TypeFilterOptions>(options =>
-                    {
-                        
-                    });
-
-            using (var provider = services.BuildServiceProvider())
+            catch (Exception e)
             {
-                using (var scope = provider.CreateScope())
-                {
-                    var runner = scope.ServiceProvider.GetRequiredService<IMigrationRunner>();
-
-                    runner.MigrateUp();
-                }
+                
             }
         }
     }

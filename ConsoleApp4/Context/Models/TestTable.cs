@@ -7,8 +7,7 @@ namespace ConsoleApp4.Context.Models
     {
         public Guid Id { get; set; }
         public string Name { get; set; }
-
-        [NotColumn]
-        public ExternalId ExternalId { get; set; }
+        
+        public ExternalId ExternalId { get; set; } = new();
     }
 }
