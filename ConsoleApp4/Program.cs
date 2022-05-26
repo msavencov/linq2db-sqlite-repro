@@ -21,7 +21,7 @@ class Program
         connection.ApplyMigrations();
             
         var inserted = connection.Insert(row1);
-        var updated = connection.GetTable<TestTable>()
+        var _ = connection.GetTable<TestTable>()
                                 .Where(t => t.Id == row1.Id)
                                 .Set(t => t.ExternalId.Id, random.Next().ToString())
                                 .Update();
@@ -34,6 +34,33 @@ class Program
         }
         catch (Exception e)
         {
+            Console.Error.WriteLine("InsertWithOutput failed");
+            Console.WriteLine(e);
+        }
+
+        try
+        {
+            var query = connection.GetTable<TestTable>()
+                                .Where(t => t.Id == row1.Id)
+                                .Set(t => t.Name, "dddddd")
+                                .UpdateWithOutput();
+            var updated = query.ToList();
+        }
+        catch (Exception e)
+        {
+            Console.Error.WriteLine("UpdateWithOutput failed");
+            Console.WriteLine(e);
+        }
+        try
+        {
+            var query = connection.GetTable<TestTable>()
+                                .Where(t => t.Id == row1.Id)
+                                .DeleteWithOutput();
+            var deleted = query.ToList();
+        }
+        catch (Exception e)
+        {
+            Console.Error.WriteLine("DeleteWithOutput failed");
             Console.WriteLine(e);
         }
     }
